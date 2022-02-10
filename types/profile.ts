@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
-import { IBaseType } from './baseType';
+import { ISoftDeletable } from './softDeletable';
 
-export interface IProfile extends IBaseType {
+export interface IProfile extends ISoftDeletable {
   user_id: Schema.Types.ObjectId;
   username: string;
   bio: string;

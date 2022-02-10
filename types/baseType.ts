@@ -1,6 +1,4 @@
-// Base Type for all Schema that enables soft-deletes for data recovery
+// Base type for all Schema that includes schema versioning
 export interface IBaseType {
-  deleted: boolean;
-  date_deleted: Date;
   schema_version: number;
 }
