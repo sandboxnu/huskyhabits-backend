@@ -8,7 +8,7 @@ const userSchema: Schema = new Schema<IUser>(
     first_name: String,
     last_name: String,
     accounts: [{ acc_type: String, uid: String }],
-    deleted: Boolean,
+    deleted: { type: Boolean, default: false },
     date_deleted: Date,
     schema_version: { type: Number, default: 1 },
   },
