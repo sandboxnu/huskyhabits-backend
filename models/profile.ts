@@ -11,3 +11,5 @@ const profileSchema: Schema = new Schema<IProfile>(
   },
   { timestamps: true },
 );
+
+export default model<IProfile>('Profile', profileSchema);
