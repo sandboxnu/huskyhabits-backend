@@ -9,7 +9,7 @@ const app: Application = express();
 const db = mongoose.connection;
 const port: number | string = process.env.PORT || 3000;
 
-connectDatabase();
+//connectDatabase();
 
 // Express config
 app.use(cors());
