@@ -8,4 +8,4 @@ COPY . .
 EXPOSE 3000
 RUN tsc server.ts
 # ADD start.sh /
-CMD ["node", "server.js"]
+CMD ["node", "server.ts"]

@@ -1,6 +1,8 @@
-import express, { Request, Response, Application } from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
+import express = require('express');
+import cors = require('cors');
+import mongoose = require('mongoose');
+
+import { Request, Response, Application } from 'express';
 import 'dotenv/config';
 import test from './routes/test.route';
 import { connectDatabase } from './services/database.service';
@@ -9,7 +11,7 @@ const app: Application = express();
 const db = mongoose.connection;
 const port: number | string = process.env.PORT || 3000;
 
-//connectDatabase();
+connectDatabase();
 
 // Express config
 app.use(cors());
