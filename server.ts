@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import cors from 'cors';
 import 'dotenv/config';
 import test from './routes/test.route';
+import profiles from './routes/profiles.route';
 import { connectDatabase } from './services/database.service';
 
 const app: Application = express();
@@ -23,6 +24,7 @@ app.get('/', (req: Request, res: Response): void => {
 });
 
 app.use('/api/test', test);
+app.use('/api/v1/profiles', profiles);
 
 db.on('error', console.error.bind(console, 'connection error: '));
 
