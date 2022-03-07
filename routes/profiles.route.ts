@@ -1,11 +1,12 @@
 import { Request, Response, Router } from 'express';
 import ProfileModel from '../models/profile';
+import '@types/jest';
 
 const router: Router = Router();
 
 // Gets the profile of the current logged in user
 router.get('/', (req: Request, res: Response) => {
-  let id = '621592eb5d1d819799a2598d'; // TODO: change this to current user
+  const id = '621592eb5d1d819799a2598d'; // TODO: change this to current user
 
   ProfileModel.findOne({ _id: id })
     .then((profile) => {
@@ -18,7 +19,7 @@ router.get('/', (req: Request, res: Response) => {
 
 // Gets the profile with the given id
 router.get('/:id', async (req: Request, res: Response) => {
-  let id = req.params.id;
+  const id = req.params.id;
 
   ProfileModel.findOne({ _id: id })
     .then((profile) => {
@@ -31,9 +32,9 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 // Creates a new profile with the given data
 router.post('/', (req: Request, res: Response) => {
-  let body = req.body;
+  const body = req.body;
 
-  let p = new ProfileModel(body);
+  const p = new ProfileModel(body);
 
   p.save()
     .then((savedProfile) => {
