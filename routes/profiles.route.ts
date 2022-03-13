@@ -1,6 +1,5 @@
 import { Request, Response, Router } from 'express';
 import ProfileModel from '../models/profile';
-import '@types/jest';
 
 const router: Router = Router();
 
@@ -18,16 +17,19 @@ router.get('/', (req: Request, res: Response) => {
 });
 
 // Gets the profile with the given id
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', (req: Request, res: Response) => {
   const id = req.params.id;
 
-  ProfileModel.findOne({ _id: id })
-    .then((profile) => {
+  ProfileModel.findById(id, (err: any, profile: any) => {
+    if (err) {
+      res.status(400).json(err);
+    }
+    if (!profile) {
+      res.status(404).json('Profile does not exist');
+    } else {
       res.status(200).json(profile);
-    })
-    .catch((err) => {
-      res.status(404).json(err);
-    });
+    }
+  });
 });
 
 // Creates a new profile with the given data

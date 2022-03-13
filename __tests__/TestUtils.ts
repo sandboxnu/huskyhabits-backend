@@ -1,16 +1,30 @@
-import express, { Request, Response, Application } from 'express';
 import mongoose from 'mongoose';
+import 'dotenv/config';
+import express, { Request, Response, Application } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import profiles from './routes/profiles.route';
-import { connectDatabase } from './services/database.service';
+import profiles from '../routes/profiles.route';
+//import profiles from './routes/profiles.route';
+
+export const connectTestDatabase = async () => {
+  const mongoDB: string = `${process.env.DATABASE}-test` || '';
+
+  try {
+    // connect to MongoDB
+    await mongoose.connect(mongoDB);
+  } catch (err: any) {
+    console.error(err.message);
+    // Exit process with failure
+    process.exit(1);
+  }
+};
 
 const app: Application = express();
 const db = mongoose.connection;
 
 const port: number | string = process.env.PORT || 3000;
 
-connectDatabase();
+connectTestDatabase();
 
 // Express config
 app.use(cors());
@@ -30,7 +44,5 @@ db.on('error', console.error.bind(console, 'connection error: '));
 db.once('open', (): void => {
   console.log('Connected successfully');
 });
-
-app.listen(port, (): void => console.log('Listening on Port 3000'));
 
 module.exports = app;
