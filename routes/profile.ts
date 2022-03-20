@@ -1,7 +1,8 @@
-import e, { Request, Response, Router } from 'express';
-import { GETProfile } from '../apitypes/profile';
-import ProfileModel from '../dbmodels/profile';
+import { Request, Response, Router } from 'express';
+import { GETProfile, POSTCreateProfile } from '../apitypes/profile';
+import { IProfile } from '../dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
+import { sendError } from '../exceptions/utils';
 const profile_controller = require('../controllers/profile');
 
 const router: Router = Router();
@@ -31,23 +32,26 @@ router.get('/:user_id', (req: Request, res: Response) => {
       res.status(200).json(profile);
     })
     .catch((err: any) => {
-      if (err instanceof HTTPError) res.status(err.code).send(err.msg);
-      else res.sendStatus(500);
+      sendError(err, res);
     });
 });
 
 // Creates a new profile with the given data
 router.post('/', (req: Request, res: Response) => {
-  const body = req.body;
+  const profile: POSTCreateProfile = {
+    user_id: req.body.user_id,
+    username: req.body.username,
+    bio: req.body.bio || '',
+    photo: req.body.photo || '',
+  };
 
-  const p = new ProfileModel(body);
-
-  p.save()
-    .then((savedProfile) => {
+  profile_controller
+    .create_profile(profile)
+    .then((_: IProfile) => {
       res.sendStatus(200);
     })
-    .catch((err) => {
-      res.status(400).json(err);
+    .catch((err: any) => {
+      sendError(err, res);
     });
 });
 
