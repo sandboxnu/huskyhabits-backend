@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "ts-node-dev server.ts",
-    "test": "jest --watchAll",
+    "test": "jest --watchAll --runInBand",
     "prepare": "husky install"
   },
   "dependencies": {

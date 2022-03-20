@@ -1,9 +1,27 @@
 const request = require('supertest');
-const app = require('./TestUtils');
-import ProfileModel from '../models/profile';
+import app from '../app';
+import ProfileModel from '../dbmodels/profile';
 import mongoose from 'mongoose';
+import { GETProfile } from '../apitypes/profile';
 
 const profile_route: string = '/api/v1/profiles';
+
+beforeAll(() => {
+  const mongoDB: string = `${process.env.DATABASE}-test` || '';
+
+  try {
+    // connect to MongoDB
+    mongoose.connect(mongoDB);
+  } catch (err: any) {
+    console.error(err.message);
+    // Exit process with failure
+    process.exit(1);
+  }
+});
+
+afterAll(() => {
+  mongoose.disconnect();
+});
 
 describe('Create Profile', () => {
   let new_user_id: mongoose.Types.ObjectId;
@@ -54,8 +72,8 @@ describe('Create Profile', () => {
 describe('testing getting the profile with the given id', () => {
   let new_user_id: mongoose.Types.ObjectId;
 
-  beforeEach(async () => {
-    await ProfileModel.deleteMany({});
+  beforeEach(() => {
+    ProfileModel.deleteMany({});
     //u1.save();
     new_user_id = new mongoose.Types.ObjectId();
   });
@@ -70,7 +88,6 @@ describe('testing getting the profile with the given id', () => {
     await request(app).post(profile_route).send(profile_to_get);
     const response = await request(app).get(user_route);
     expect(response.body.username).toBe(profile_to_get.username);
-    expect(response.body._id).toStrictEqual(new_user_id.toString());
     expect(response.body.user_id).toStrictEqual(new_user_id.toString());
   });
 
@@ -92,25 +109,20 @@ describe('testing getting the profile with the given id', () => {
     await request(app).post(profile_route).send(user_profile_1);
     await request(app).post(profile_route).send(user_profile_2);
     let response = await request(app).get(user_profile_1_route);
-    expect(response.body.username).toBe(user_profile_1.username);
-    expect(response.body._id).toStrictEqual(user_profile_1._id.toString());
-    expect(response.body.user_id).toStrictEqual(
-      user_profile_1.user_id.toString(),
-    );
+    let profile: GETProfile = response.body;
+    expect(profile.username).toBe(user_profile_1.username);
+    expect(profile.user_id).toStrictEqual(user_profile_1.user_id.toString());
     response = await request(app).get(user_profile_2_route);
-    expect(response.body.username).toBe(user_profile_2.username);
-    expect(response.body._id).toStrictEqual(user_profile_2._id.toString());
-    expect(response.body.user_id).toStrictEqual(
-      user_profile_2.user_id.toString(),
-    );
+    profile = response.body;
+    expect(profile.username).toBe(user_profile_2.username);
+    expect(profile.user_id).toStrictEqual(user_profile_2.user_id.toString());
   });
 
   it('should send 404 code if not found', async () => {
     const route: string = `${profile_route}/${new mongoose.Types.ObjectId()}`;
-    console.log(route);
     const response = await request(app).get(route);
     expect(response.statusCode).toBe(404);
-    expect(response.body).toBe('Profile does not exist');
+    expect(response.text).toBe('Profile not found');
   });
 
   it("should send 404 if id doesn't match any id in database", async () => {
@@ -123,6 +135,6 @@ describe('testing getting the profile with the given id', () => {
     await request(app).post(profile_route).send(profile_to_get);
     const response = await request(app).get(route);
     expect(response.statusCode).toBe(404);
-    expect(response.body).toBe('Profile does not exist');
+    expect(response.text).toBe('Profile not found');
   });
 });
