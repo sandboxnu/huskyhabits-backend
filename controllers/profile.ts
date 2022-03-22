@@ -3,6 +3,7 @@ import ProfileModel from '../dbmodels/profile';
 import { IProfile } from '../dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 
+// Gets a profile with the given id
 exports.get_profile = async (user_id: string): Promise<GETProfile> => {
   let doc = await ProfileModel.findOne({ user_id: user_id });
 
@@ -19,6 +20,7 @@ exports.get_profile = async (user_id: string): Promise<GETProfile> => {
   };
 };
 
+// Creates a profile with the provided info
 exports.create_profile = async (
   profile: POSTCreateProfile,
 ): Promise<IProfile> => {

@@ -6,6 +6,7 @@ import { GETProfile } from '../apitypes/profile';
 
 const profile_route: string = '/api/v1/profiles';
 
+// Connect to db before all tests
 beforeAll(() => {
   const mongoDB: string = `${process.env.DATABASE}-test` || '';
 
@@ -19,6 +20,7 @@ beforeAll(() => {
   }
 });
 
+// Disconnect from db after all tests
 afterAll(() => {
   mongoose.disconnect();
 });

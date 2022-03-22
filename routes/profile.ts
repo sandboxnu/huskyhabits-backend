@@ -38,6 +38,7 @@ router.get('/:user_id', (req: Request, res: Response) => {
 
 // Creates a new profile with the given data
 router.post('/', (req: Request, res: Response) => {
+  // TODO - validate type of body
   const profile: POSTCreateProfile = {
     user_id: req.body.user_id,
     username: req.body.username,
