@@ -1,6 +1,6 @@
-import { GETProfile, POSTCreateProfile } from '../apitypes/profile';
+import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
 import ProfileModel from '../dbmodels/profile';
-import { IProfile } from '../dbtypes/profile';
+import { IProfile } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 
 // Gets a profile with the given id
@@ -24,7 +24,7 @@ exports.get_profile = async (user_id: string): Promise<GETProfile> => {
 exports.create_profile = async (
   profile: POSTCreateProfile,
 ): Promise<IProfile> => {
-  const created = new ProfileModel(profile);
+  const model = new ProfileModel(profile);
 
-  return await created.save();
+  return await model.save();
 };

@@ -1,5 +1,5 @@
 import { model, Schema } from 'mongoose';
-import { IUser } from '../dbtypes/user';
+import { IUser } from '../types/dbtypes/user';
 
 // A logged-in User to Husky Habits
 const userSchema: Schema = new Schema<IUser>(

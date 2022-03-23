@@ -1,8 +1,9 @@
 import { Request, Response, Router } from 'express';
-import { GETProfile, POSTCreateProfile } from '../apitypes/profile';
-import { IProfile } from '../dbtypes/profile';
+import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
+import { IProfile } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
-import { sendError } from '../exceptions/utils';
+import { sendError, sendValidationError } from '../exceptions/utils';
+import { ajv } from '../types/validation';
 const profile_controller = require('../controllers/profile');
 
 const router: Router = Router();
@@ -38,22 +39,27 @@ router.get('/:user_id', (req: Request, res: Response) => {
 
 // Creates a new profile with the given data
 router.post('/', (req: Request, res: Response) => {
-  // TODO - validate type of body
-  const profile: POSTCreateProfile = {
-    user_id: req.body.user_id,
-    username: req.body.username,
-    bio: req.body.bio || '',
-    photo: req.body.photo || '',
-  };
+  const validate = ajv.getSchema<POSTCreateProfile>('POSTCreateProfile');
+  if (!validate) {
+    res.sendStatus(500);
+    return;
+  }
 
-  profile_controller
-    .create_profile(profile)
-    .then((_: IProfile) => {
-      res.sendStatus(200);
-    })
-    .catch((err: any) => {
-      sendError(err, res);
-    });
+  if (validate(req.body)) {
+    profile_controller
+      .create_profile(req.body)
+      .then((_: IProfile) => {
+        res.sendStatus(200);
+      })
+      .catch((err: any) => {
+        if (err.name == 'MongoServerError' && err.code == 11000) {
+          err = new HTTPError('Profile already exists', 400);
+        }
+        sendError(err, res);
+      });
+  } else {
+    sendValidationError(validate, res);
+  }
 });
 
 export default router;

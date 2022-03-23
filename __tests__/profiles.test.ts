@@ -2,7 +2,6 @@ const request = require('supertest');
 import app from '../app';
 import ProfileModel from '../dbmodels/profile';
 import mongoose from 'mongoose';
-import { GETProfile } from '../apitypes/profile';
 
 const profile_route: string = '/api/v1/profiles';
 
@@ -26,22 +25,15 @@ afterAll(() => {
 });
 
 describe('Create Profile', () => {
-  let new_user_id: mongoose.Types.ObjectId;
-  // const u1 = new ProfileModel({
-  //   _id: '621592eb5d1d819799a2598d',
-  //   user_id: '621592eb5d1d819799a2598d',
-  //   username: 'CurrentUser',
-  // });
+  let new_user_id: string;
 
   beforeEach(async () => {
     await ProfileModel.deleteMany({});
-    //u1.save();
-    new_user_id = new mongoose.Types.ObjectId();
+    new_user_id = new mongoose.Types.ObjectId().toString();
   });
 
   it('should create a new profile', async () => {
     const user_profile = {
-      _id: new_user_id,
       user_id: new_user_id,
       username: 'User 2',
     };
@@ -51,7 +43,6 @@ describe('Create Profile', () => {
 
   it('should send error message for duplicate entries', async () => {
     const user_profile = {
-      _id: new_user_id,
       user_id: new_user_id,
       username: 'User 2',
     };
@@ -72,17 +63,15 @@ describe('Create Profile', () => {
 });
 
 describe('testing getting the profile with the given id', () => {
-  let new_user_id: mongoose.Types.ObjectId;
+  let new_user_id: string;
 
   beforeEach(() => {
     ProfileModel.deleteMany({});
-    //u1.save();
-    new_user_id = new mongoose.Types.ObjectId();
+    new_user_id = new mongoose.Types.ObjectId().toString();
   });
 
   it('should return the profile of the given user', async () => {
     const profile_to_get = {
-      _id: new_user_id,
       user_id: new_user_id,
       username: 'TestPerson',
     };
@@ -94,15 +83,13 @@ describe('testing getting the profile with the given id', () => {
   });
 
   it('should return correct user with multiple entries', async () => {
-    const id1 = new mongoose.Types.ObjectId();
-    const id2 = new mongoose.Types.ObjectId();
+    const id1 = new mongoose.Types.ObjectId().toString();
+    const id2 = new mongoose.Types.ObjectId().toString();
     const user_profile_1 = {
-      _id: id1,
       user_id: id1,
       username: 'test1',
     };
     const user_profile_2 = {
-      _id: id2,
       user_id: id2,
       username: 'test2',
     };
@@ -111,7 +98,9 @@ describe('testing getting the profile with the given id', () => {
     await request(app).post(profile_route).send(user_profile_1);
     await request(app).post(profile_route).send(user_profile_2);
     let response = await request(app).get(user_profile_1_route);
-    let profile: GETProfile = response.body;
+    expect(response.statusCode).toBe(200);
+
+    let profile = response.body;
     expect(profile.username).toBe(user_profile_1.username);
     expect(profile.user_id).toStrictEqual(user_profile_1.user_id.toString());
     response = await request(app).get(user_profile_2_route);
@@ -130,7 +119,6 @@ describe('testing getting the profile with the given id', () => {
   it("should send 404 if id doesn't match any id in database", async () => {
     const route: string = `${profile_route}/${new mongoose.Types.ObjectId()}`;
     const profile_to_get = {
-      _id: new_user_id,
       user_id: new_user_id,
       username: 'Bob the Builder',
     };
