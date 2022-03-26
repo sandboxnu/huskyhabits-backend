@@ -1,28 +1,13 @@
-import express, { Request, Response, Application } from 'express';
 import mongoose from 'mongoose';
-import cors from 'cors';
 import 'dotenv/config';
-import test from './routes/test.route';
 import { connectDatabase } from './services/database.service';
+import app from './app';
 
-const app: Application = express();
 const db = mongoose.connection;
+
 const port: number | string = process.env.PORT || 3000;
 
 connectDatabase();
-
-// Express config
-app.use(cors());
-app.use(express.json());
-
-/* ROUTES */
-
-// base route
-app.get('/', (req: Request, res: Response): void => {
-  res.send({ greeting: 'Hello world!' });
-});
-
-app.use('/api/test', test);
 
 db.on('error', console.error.bind(console, 'connection error: '));
 
