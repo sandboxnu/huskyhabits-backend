@@ -9,13 +9,14 @@ import HTTPError from './exceptions/HTTPError';
 import { IUser } from './types/dbtypes/user';
 import cookieSession from 'cookie-session';
 
-// define IUser
+// specify the User type in Passport as our IUser type
 declare global {
   namespace Express {
     interface User extends IUser {}
   }
 }
 
+// used by passport before putting the user in the cookie session; grabs just the ID for storage
 passport.serializeUser<Schema.Types.ObjectId>(
   (
     _req: Request,
@@ -26,6 +27,7 @@ passport.serializeUser<Schema.Types.ObjectId>(
   },
 );
 
+// used by passport when reading in cookies, so it can populate req.user with the user object based on the ID in the cookie
 passport.deserializeUser(
   (id: Schema.Types.ObjectId, done: (err: any, user?: IUser) => void) => {
     get_user_by_id(id)
@@ -38,7 +40,8 @@ passport.deserializeUser(
   },
 );
 
-// Auth middleware that checks if the user is logged in
+// Auth middleware that checks if the user is logged in; use in all endpoints
+// that need req.user / an authenticated user to access
 const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   if (req.user) {
     next();
@@ -47,6 +50,7 @@ const isLoggedIn = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
+// adds the endpoints for logging in via oauth to the application
 export const addAuthenticationRoutes = (app: Application) => {
   app.use(
     cookieSession({
@@ -95,6 +99,8 @@ export const addAuthenticationRoutes = (app: Application) => {
   );
 
   // Auth Routes
+
+  // hitting this endpoint sends the user to the google login page
   app.get(
     '/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] }),
@@ -111,7 +117,6 @@ export const addAuthenticationRoutes = (app: Application) => {
 
   app.get('/auth/failed', (req, res) => res.status(401).send('Login Failure'));
 
-  // In this route you can see that if the user is logged in u can acess his info in: req.user
   app.get('/auth/success', isLoggedIn, (req, res) =>
     res.status(200).send(req.user),
   );
