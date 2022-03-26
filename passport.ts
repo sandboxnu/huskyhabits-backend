@@ -65,9 +65,8 @@ export const addAuthenticationRoutes = (app: Application) => {
   passport.use(
     new google.Strategy(
       {
-        // 336268932685-f32ielccpm9i0dldo45lareus6p429iu.apps.googleusercontent.com
         clientID: process.env.GOOGLECLIENTID || '',
-        clientSecret: process.env.GOOGLECLIENTSECRET || '', // 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
+        clientSecret: process.env.GOOGLECLIENTSECRET || '',
         callbackURL: 'http://localhost:3000/auth/google/callback',
       },
       (accessToken: string, refreshToken: string, profile: Profile, done) => {
