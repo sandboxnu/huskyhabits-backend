@@ -1,7 +1,9 @@
-import UserSchema from '../models/user';
-import { IUser } from '../types/user';
+import UserSchema from '../dbmodels/user';
+import HTTPError from '../exceptions/HTTPError';
+import { IUser } from '../types/dbtypes/user';
+import { Schema } from 'mongoose';
 
-exports.get_or_create_user = async (
+export const get_or_create_user = async (
   email: string,
   first_name: string,
   last_name: string,
@@ -13,6 +15,18 @@ exports.get_or_create_user = async (
         first_name: first_name,
         last_name: last_name,
       });
+    }
+
+    return result;
+  });
+};
+
+export const get_user_by_id = async (
+  id: Schema.Types.ObjectId,
+): Promise<IUser> => {
+  return UserSchema.findById(id).then((result: IUser | null | undefined) => {
+    if (!result) {
+      return Promise.reject(new HTTPError('User does not exist.', 40));
     }
 
     return result;
