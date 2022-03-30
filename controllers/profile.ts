@@ -34,6 +34,7 @@ export const create_profile = (
   return save_profile(model);
 };
 
+// A type corresponding to profile photos in the database
 type Photo = {
   data: Buffer;
   contentType: String;

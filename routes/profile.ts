@@ -65,6 +65,7 @@ router.post('/', (req: Request, res: Response) => {
   }
 });
 
+// Gets the photo for a given profile
 router.get('/:profile_id/photo', (req: Request, res: Response) => {
   const profile_id = req.params.profile_id;
 
@@ -77,6 +78,7 @@ router.get('/:profile_id/photo', (req: Request, res: Response) => {
     });
 });
 
+// Sets the photo for a given profile
 router.post('/:profile_id/photo', (req: Request, res: Response) => {
   a: Request;
   const profile_id = req.params.profile_id;
