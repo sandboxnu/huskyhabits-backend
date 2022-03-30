@@ -1,7 +1,8 @@
 import mongoose from 'mongoose';
 import 'dotenv/config';
 import { connectDatabase } from './services/database.service';
-import { addAuthenticationRoutes } from './passport';
+import authRoutes from './routes/auth';
+import { setupAuthentication } from './authentication';
 import app from './app';
 
 const db = mongoose.connection;
@@ -16,6 +17,10 @@ db.once('open', (): void => {
   console.log('Connected successfully');
 });
 
-addAuthenticationRoutes(app);
+// set up authentication middleware
+setupAuthentication(app);
+
+// add authentication routes (e.g. via Google, etc.)
+app.use('/auth', authRoutes);
 
 app.listen(port, (): void => console.log('Listening on Port 3000'));
