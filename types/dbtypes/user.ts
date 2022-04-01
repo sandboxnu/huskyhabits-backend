@@ -1,3 +1,4 @@
+import { Schema } from 'mongoose';
 import { ISoftDeletable } from './softDeletable';
 import { Schema } from 'mongoose';
 
