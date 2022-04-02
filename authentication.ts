@@ -53,9 +53,17 @@ passport.use(
       clientID: process.env.GOOGLECLIENTID || '',
       clientSecret: process.env.GOOGLECLIENTSECRET || '',
       callbackURL: 'http://localhost:3000/auth/google/callback',
+      passReqToCallback: true, // TODO: remove if not needed (along with req arg)
     },
-    (accessToken: string, refreshToken: string, profile: Profile, done) => {
+    (
+      req: Request,
+      accessToken: string,
+      refreshToken: string,
+      profile: Profile,
+      done: google.VerifyCallback,
+    ) => {
       if (
+        !profile ||
         !profile.emails ||
         !profile.name ||
         !profile.name.givenName ||
