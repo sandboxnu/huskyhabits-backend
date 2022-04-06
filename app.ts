@@ -1,7 +1,7 @@
 import express, { Request, Response, Application } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import profiles from './routes/profile';
+import profiles from './routes/profile.route';
 
 const app: Application = express();
 

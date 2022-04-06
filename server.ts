@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import 'dotenv/config';
 import { connectDatabase } from './services/database.service';
-import authRoutes from './routes/auth';
+import authRoutes from './routes/auth.route';
 import { setupAuthentication } from './authentication';
 import app from './app';
 

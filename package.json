@@ -21,6 +21,7 @@
     "node": "^17.4.0",
     "passport": "^0.5.2",
     "passport-google-oauth2": "^0.2.0",
+    "tsoa": "^3.14.1",
     "typescript": "^4.6.2"
   },
   "devDependencies": {
