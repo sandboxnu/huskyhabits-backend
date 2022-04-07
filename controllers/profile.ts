@@ -30,7 +30,12 @@ export const profile_get_by_user_id = async (
   let docs = await get_profiles_by_user_id(user_id);
 
   if (!docs) {
-    const err = new HTTPError('Profile not found', 404);
+    const err = new HTTPError('User not found', 404);
+    return Promise.reject(err);
+  }
+
+  if (docs.length == 0) {
+    const err = new HTTPError('User has no profiles', 404);
     return Promise.reject(err);
   }
 
@@ -48,6 +53,16 @@ export const profile_post = (
   user: IUser,
 ): Promise<IProfile> => {
   return create_profile(profile.username, profile.bio, user._id);
+};
+
+// Does the profile belong to the specified user?
+export const user_owns_profile = async (
+  profile_id: string,
+  user: IUser,
+): Promise<boolean> => {
+  let doc = await get_profile_by_id(profile_id);
+
+  return doc.user_id.toString() == user._id.toString();
 };
 
 // A type corresponding to profile photos in the database

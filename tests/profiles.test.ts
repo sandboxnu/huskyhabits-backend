@@ -6,8 +6,16 @@ import { IUser } from '../types/dbtypes/user';
 import UserModel from '../dbmodels/user';
 import { generate_cookies } from './utils';
 import { IProfile } from '../types/dbtypes/profile';
-import { profile_get, profile_post } from '../controllers/profile';
+import {
+  get_profile_photo,
+  profile_get,
+  profile_get_by_user_id,
+  profile_post,
+  set_profile_photo,
+  user_owns_profile,
+} from '../controllers/profile';
 import { POSTCreateProfile } from '../types/apitypes/profile';
+import fs from 'fs';
 
 const profile_route: string = '/api/v1/profiles';
 
@@ -17,6 +25,8 @@ beforeAll(() => {
 
   try {
     mongoose.connect(mongoDB);
+    ProfileModel.deleteMany({});
+    UserModel.deleteMany({});
   } catch (err: any) {
     console.error(err.message);
     process.exit(1);
@@ -25,36 +35,44 @@ beforeAll(() => {
 
 // Disconnect from db after all tests
 afterAll(() => {
+  ProfileModel.deleteMany({});
+  UserModel.deleteMany({});
   mongoose.disconnect();
 });
 
 describe('Testing profile controller', () => {
   var cur_user: IUser;
+  var other_user: IUser;
   var profile1: IProfile;
   var profile2: IProfile;
+  const photo1 = `${__dirname}/test_photo1.jpg`;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
     await ProfileModel.deleteMany({});
     await UserModel.deleteMany({});
 
     cur_user = await UserModel.create({
-      _id: new mongoose.Types.ObjectId(),
       email: 'person@test.com',
       first_name: 'Test',
       last_name: 'Person',
       accounts: [{ acc_type: '', uid: '' }],
     });
 
+    other_user = await UserModel.create({
+      email: 'person2@test.com',
+      first_name: 'Other',
+      last_name: 'Guy',
+      accounts: [{ acc_type: '', uid: '' }],
+    });
+
     profile1 = await ProfileModel.create({
-      _id: new mongoose.Types.ObjectId(),
       user_id: cur_user._id,
       username: 'profile1',
       bio: 'Hello World!',
     });
 
     profile2 = await ProfileModel.create({
-      _id: new mongoose.Types.ObjectId(),
-      user_id: cur_user._id,
+      user_id: other_user._id,
       username: 'profile2',
       bio: 'Goodbye World!',
     });
@@ -66,11 +84,50 @@ describe('Testing profile controller', () => {
     expect(res1.user_id).toStrictEqual(profile1.user_id);
     expect(res1.username).toBe(profile1.username);
     expect(res1.bio).toBe(profile1.bio);
+
     const res2 = await profile_get(profile2._id.toString());
     expect(res2._id).toStrictEqual(profile2._id);
     expect(res2.user_id).toStrictEqual(profile2.user_id);
     expect(res2.username).toBe(profile2.username);
     expect(res2.bio).toBe(profile2.bio);
+  });
+
+  it('should get first profile by user id', async () => {
+    const res1 = await profile_get_by_user_id(cur_user._id);
+    expect(res1._id).toStrictEqual(profile1._id);
+    expect(res1.user_id).toStrictEqual(profile1.user_id);
+    expect(res1.username).toBe(profile1.username);
+    expect(res1.bio).toBe(profile1.bio);
+
+    const res2 = await profile_get_by_user_id(other_user._id);
+    expect(res2._id).toStrictEqual(profile2._id);
+    expect(res2.user_id).toStrictEqual(profile2.user_id);
+    expect(res2.username).toBe(profile2.username);
+    expect(res2.bio).toBe(profile2.bio);
+  });
+
+  it("should fail to get user's profile if one doesn't exist", async () => {
+    const new_user = await UserModel.create({
+      email: 'person3@test.com',
+      first_name: 'Another',
+      last_name: 'User',
+      accounts: [{ acc_type: '', uid: '' }],
+    });
+
+    expect(profile_get_by_user_id(new_user._id)).rejects.toMatchObject({
+      code: 404,
+      msg: 'User has no profiles',
+    });
+
+    await ProfileModel.create({
+      username: 'profile3',
+      user_id: new_user._id,
+    });
+
+    expect(profile_get_by_user_id(new_user._id)).resolves.toMatchObject({
+      username: 'profile3',
+      user_id: new_user._id,
+    });
   });
 
   it("profile get should fail if profile doesn't exist", async () => {
@@ -110,6 +167,50 @@ describe('Testing profile controller', () => {
       code: 11000,
     });
   });
+
+  it('test user_owns_profile', () => {
+    expect(
+      user_owns_profile(profile1._id.toString(), cur_user),
+    ).resolves.toBeTruthy();
+    expect(
+      user_owns_profile(profile1._id.toString(), other_user),
+    ).resolves.toBeFalsy();
+    expect(
+      user_owns_profile(profile2._id.toString(), cur_user),
+    ).resolves.toBeFalsy();
+    expect(
+      user_owns_profile(profile2._id.toString(), other_user),
+    ).resolves.toBeTruthy();
+  });
+
+  it('should set a photo for a profile', async () => {
+    const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
+    const profile = await set_profile_photo(profile1._id.toString(), photo);
+
+    expect(profile._id).toStrictEqual(profile1._id);
+    expect(profile.photo).toMatchObject(photo);
+  });
+
+  it('should get the photo for a profile', async () => {
+    const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
+    await set_profile_photo(profile1._id.toString(), photo);
+
+    const result = await get_profile_photo(profile1._id.toString());
+    expect(result).toMatchObject(photo);
+
+    const noPhotoResult = await get_profile_photo(profile2._id.toString());
+    expect(noPhotoResult).toMatchObject({});
+  });
+
+  it('should send an error if setting or getting photo for nonexistant profile id', () => {
+    expect(
+      get_profile_photo(new mongoose.Types.ObjectId().toString()),
+    ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
+    const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
+    expect(
+      set_profile_photo(new mongoose.Types.ObjectId().toString(), photo),
+    ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
+  });
 });
 
 describe('Testing profile POST', () => {
@@ -120,7 +221,6 @@ describe('Testing profile POST', () => {
     await UserModel.deleteMany({});
 
     cur_user = await UserModel.create({
-      _id: new mongoose.Types.ObjectId(),
       email: 'person@test.com',
       first_name: 'Test',
       last_name: 'Person',
@@ -253,7 +353,6 @@ describe('Testing profile GET', () => {
     await UserModel.deleteMany({});
 
     cur_user = await UserModel.create({
-      _id: new mongoose.Types.ObjectId(),
       email: 'person@test.com',
       first_name: 'Test',
       last_name: 'Person',
@@ -374,5 +473,115 @@ describe('Testing profile GET', () => {
         (response.body.username == new_profile2.username &&
           response.body.bio == new_profile2.bio),
     ).toBeTruthy();
+  });
+});
+
+describe('Testing profile photo POST and GET', () => {
+  var cur_user: IUser;
+  var other_user: IUser;
+  var profile1: IProfile;
+  var profile2: IProfile;
+  var photo1: string;
+  var photo2: string;
+
+  beforeEach(async () => {
+    await ProfileModel.deleteMany({});
+    await UserModel.deleteMany({});
+
+    cur_user = await UserModel.create({
+      email: 'person@test.com',
+      first_name: 'Test',
+      last_name: 'Person',
+      accounts: [{ acc_type: '', uid: '' }],
+    });
+
+    other_user = await UserModel.create({
+      email: 'person2@test.com',
+      first_name: 'Other',
+      last_name: 'Guy',
+      accounts: [{ acc_type: '', uid: '' }],
+    });
+
+    profile1 = await ProfileModel.create({
+      user_id: cur_user._id,
+      username: 'profile1',
+      bio: 'Hello World!',
+    });
+
+    profile2 = await ProfileModel.create({
+      user_id: other_user._id,
+      username: 'profile2',
+      bio: 'Goodbye World!',
+    });
+
+    photo1 = `${__dirname}/test_photo1.jpg`;
+    photo2 = `${__dirname}/test_photo2.jpg`;
+  });
+
+  it("should fail to post photo if user doesn't own profile", async () => {
+    let response = await request(app).post(
+      `${profile_route}/${profile1._id}/photo`,
+    );
+    expect(response.statusCode).toBe(401);
+
+    response = await request(app)
+      .post(`${profile_route}/${profile2._id}/photo`)
+      .set('Cookie', generate_cookies(cur_user._id));
+    expect(response.statusCode).toBe(401);
+  });
+
+  it('should successfully set the photo for a profile', async () => {
+    let response = await request(app)
+      .post(`${profile_route}/${profile1._id}/photo`)
+      .set('Cookie', generate_cookies(cur_user._id))
+      .attach('photo', photo1);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body._id.toString()).toBe(profile1._id.toString());
+    expect(response.body.photo.contentType).toBe('image/jpeg');
+    expect(response.body.photo.data).toMatchObject({
+      type: 'Buffer',
+      data: fs.readFileSync(photo1),
+    });
+
+    response = await request(app)
+      .post(`${profile_route}/${profile2._id}/photo`)
+      .set('Cookie', generate_cookies(other_user._id))
+      .attach('photo', photo2);
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body._id.toString()).toBe(profile2._id.toString());
+    expect(response.body.photo.contentType).toBe('image/jpeg');
+    expect(response.body.photo.data).toMatchObject({
+      type: 'Buffer',
+      data: fs.readFileSync(photo2),
+    });
+  });
+
+  it('should successfully get the photo for a profile', async () => {
+    await request(app)
+      .post(`${profile_route}/${profile1._id}/photo`)
+      .set('Cookie', generate_cookies(cur_user._id))
+      .attach('photo', photo1);
+
+    let response = await request(app).get(
+      `${profile_route}/${profile1._id}/photo`,
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body.contentType).toBe('image/jpeg');
+    expect(response.body.data).toMatchObject({
+      type: 'Buffer',
+      data: fs.readFileSync(photo1),
+    });
+  });
+
+  it('test getting the photo for a profile with no photo', async () => {
+    let response = await request(app).get(
+      `${profile_route}/${profile2._id}/photo`,
+    );
+
+    expect(response.statusCode).toBe(200);
+    expect(response.body).toMatchObject({});
   });
 });

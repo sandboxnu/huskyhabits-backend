@@ -1,7 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
 import { IProfile } from '../types/dbtypes/profile';
-import { Schema } from 'mongoose';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';
@@ -11,6 +10,7 @@ import {
   profile_get,
   profile_get_by_user_id,
   profile_post,
+  user_owns_profile,
 } from '../controllers/profile';
 import { UploadedFile } from 'express-fileupload';
 import { authenticated } from '../authentication';
@@ -80,35 +80,45 @@ router.get('/:profile_id/photo', (req: Request, res: Response) => {
 });
 
 // Sets the photo for a given profile
-router.post('/:profile_id/photo', (req: Request, res: Response) => {
-  const profile_id = req.params.profile_id;
-  if (!req.files || Object.keys(req.files).length === 0) {
-    sendError(new HTTPError('Bad Request', 400), res);
-    return;
-  }
+router.post(
+  '/:profile_id/photo',
+  authenticated,
+  async (req: Request, res: Response) => {
+    const profile_id = req.params.profile_id;
 
-  const photoFile: UploadedFile | UploadedFile[] = req.files.photo;
+    if (!(await user_owns_profile(profile_id, req.user!))) {
+      sendError(new HTTPError('Unauthorized', 401), res);
+      return;
+    }
 
-  if (Array.isArray(photoFile)) {
-    sendError(
-      new HTTPError('Multiple images received, one expected', 400),
-      res,
-    );
-    return;
-  }
+    if (!req.files || Object.keys(req.files).length === 0) {
+      sendError(new HTTPError('Bad Request', 400), res);
+      return;
+    }
 
-  const photo = {
-    data: photoFile.data,
-    contentType: photoFile.mimetype,
-  };
+    const photoFile: UploadedFile | UploadedFile[] = req.files.photo;
 
-  set_profile_photo(profile_id, photo)
-    .then((_: IProfile) => {
-      res.sendStatus(200);
-    })
-    .catch((err: any) => {
-      sendError(err, res);
-    });
-});
+    if (Array.isArray(photoFile)) {
+      sendError(
+        new HTTPError('Multiple images received, one expected', 400),
+        res,
+      );
+      return;
+    }
+
+    const photo = {
+      data: photoFile.data,
+      contentType: photoFile.mimetype,
+    };
+
+    set_profile_photo(profile_id, photo)
+      .then((profile: IProfile) => {
+        res.status(200).send(profile);
+      })
+      .catch((err: any) => {
+        sendError(err, res);
+      });
+  },
+);
 
 export default router;

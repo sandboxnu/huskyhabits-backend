@@ -4,6 +4,7 @@ import 'dotenv/config';
 import profiles from './routes/profile';
 import authRoutes from './routes/auth';
 import { setupAuthentication } from './authentication';
+import fileUpload from 'express-fileupload';
 
 const app: Application = express();
 
@@ -13,6 +14,8 @@ app.use(express.json());
 
 // set up authentication middleware
 setupAuthentication(app);
+
+app.use(fileUpload());
 
 /* ROUTES */
 
