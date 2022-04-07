@@ -11,7 +11,6 @@ export interface GETProfile {
 
 // Type given to profile api in POST requests
 export interface POSTCreateProfile {
-  _id: string;
   username: string;
   bio?: string;
 }
@@ -20,10 +19,9 @@ export interface POSTCreateProfile {
 export const POSTCreateProfileSchema: JSONSchemaType<POSTCreateProfile> = {
   type: 'object',
   properties: {
-    _id: { type: 'string' },
     username: { type: 'string' },
     bio: { type: 'string', nullable: true },
   },
-  required: ['_id', 'username'],
+  required: ['username'],
   additionalProperties: false,
 };

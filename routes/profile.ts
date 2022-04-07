@@ -1,24 +1,25 @@
 import { Request, Response, Router } from 'express';
 import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
 import { IProfile } from '../types/dbtypes/profile';
+import { Schema } from 'mongoose';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';
 import {
-  get_profile,
-  create_profile,
   get_profile_photo,
   set_profile_photo,
+  profile_get,
+  profile_get_by_user_id,
+  profile_post,
 } from '../controllers/profile';
 import { UploadedFile } from 'express-fileupload';
+import { authenticated } from '../authentication';
 
 const router: Router = Router();
 
 // Gets the profile of the current logged in user
-router.get('/', (req: Request, res: Response) => {
-  const profile_id = '621592eb5d1d819799a2598d'; // TODO: change this to current user???
-
-  get_profile(profile_id)
+router.get('/', authenticated, (req: Request, res: Response) => {
+  profile_get_by_user_id(req.user!._id)
     .then((profile: GETProfile) => {
       res.status(200).json(profile);
     })
@@ -32,7 +33,7 @@ router.get('/', (req: Request, res: Response) => {
 router.get('/:profile_id', (req: Request, res: Response) => {
   const profile_id = req.params.profile_id;
 
-  get_profile(profile_id)
+  profile_get(profile_id)
     .then((profile: GETProfile) => {
       res.status(200).json(profile);
     })
@@ -42,7 +43,7 @@ router.get('/:profile_id', (req: Request, res: Response) => {
 });
 
 // Creates a new profile with the given data
-router.post('/', (req: Request, res: Response) => {
+router.post('/', authenticated, (req: Request, res: Response) => {
   const validate = ajv.getSchema<POSTCreateProfile>('POSTCreateProfile');
   if (!validate) {
     res.sendStatus(500);
@@ -50,9 +51,9 @@ router.post('/', (req: Request, res: Response) => {
   }
 
   if (validate(req.body)) {
-    create_profile(req.body, req.user)
-      .then((_: IProfile) => {
-        res.sendStatus(200);
+    profile_post(req.body, req.user!)
+      .then((profile: IProfile) => {
+        res.status(200).send(profile);
       })
       .catch((err: any) => {
         if (err.name == 'MongoServerError' && err.code == 11000) {
@@ -80,7 +81,6 @@ router.get('/:profile_id/photo', (req: Request, res: Response) => {
 
 // Sets the photo for a given profile
 router.post('/:profile_id/photo', (req: Request, res: Response) => {
-  a: Request;
   const profile_id = req.params.profile_id;
   if (!req.files || Object.keys(req.files).length === 0) {
     sendError(new HTTPError('Bad Request', 400), res);

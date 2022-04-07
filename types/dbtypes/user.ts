@@ -1,6 +1,5 @@
 import { Schema } from 'mongoose';
 import { ISoftDeletable } from './softDeletable';
-import { Schema } from 'mongoose';
 
 // Type representing a user object in the db
 export interface IUser extends ISoftDeletable {
