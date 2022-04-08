@@ -1,6 +1,6 @@
 import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
 import ProfileModel from '../dbmodels/profile';
-import { IProfile } from '../types/dbtypes/profile';
+import IProfile, { ProfilePhoto } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 import { IUser } from '../types/dbtypes/user';
 import {
@@ -65,16 +65,10 @@ export const user_owns_profile = async (
   return doc.user_id.toString() == user._id.toString();
 };
 
-// A type corresponding to profile photos in the database
-type Photo = {
-  data: Buffer;
-  contentType: String;
-};
-
 // Set the profile photo for the given user
 export const set_profile_photo = async (
   profile_id: string,
-  photo: Photo,
+  photo: ProfilePhoto,
 ): Promise<IProfile> => {
   let doc = await get_profile_by_id(profile_id);
 
@@ -89,8 +83,9 @@ export const set_profile_photo = async (
 };
 
 // Retreive the profile photo for the specified user
-export const get_profile_photo = async (profile_id: string): Promise<Photo> => {
+export const get_profile_photo = async (profile_id: string): Promise<ProfilePhoto> => {
   let doc = await get_profile_by_id(profile_id);
+
 
   if (!doc) {
     const err = new HTTPError('Profile not found', 404);

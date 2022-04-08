@@ -1,6 +1,6 @@
 import { Request, Response, Router } from 'express';
 import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
-import { IProfile } from '../types/dbtypes/profile';
+import IProfile from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';

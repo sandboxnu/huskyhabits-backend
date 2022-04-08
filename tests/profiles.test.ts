@@ -5,7 +5,7 @@ import mongoose from 'mongoose';
 import { IUser } from '../types/dbtypes/user';
 import UserModel from '../dbmodels/user';
 import { generate_cookies } from './utils';
-import { IProfile } from '../types/dbtypes/profile';
+import IProfile from '../types/dbtypes/profile';
 import {
   get_profile_photo,
   profile_get,
@@ -18,13 +18,12 @@ import { POSTCreateProfile } from '../types/apitypes/profile';
 import fs from 'fs';
 
 const profile_route: string = '/api/v1/profiles';
-
+const mongoDB: string = `${process.env.DATABASE}-test` || '';
+const connectOptions: any = { useNewUrlParser: true, useUnifiedTopology: true };
 // Connect to db before all tests
-beforeAll(() => {
-  const mongoDB: string = `${process.env.DATABASE}-test` || '';
-
+beforeAll(async () => {
   try {
-    mongoose.connect(mongoDB);
+    await mongoose.connect(mongoDB, connectOptions)
     ProfileModel.deleteMany({});
     UserModel.deleteMany({});
   } catch (err: any) {
@@ -34,10 +33,11 @@ beforeAll(() => {
 });
 
 // Disconnect from db after all tests
-afterAll(() => {
+afterAll(async () => {
   ProfileModel.deleteMany({});
   UserModel.deleteMany({});
-  mongoose.disconnect();
+  await mongoose.disconnect();
+  await mongoose.connection.close();
 });
 
 describe('Testing profile controller', () => {
@@ -118,7 +118,7 @@ describe('Testing profile controller', () => {
       code: 404,
       msg: 'User has no profiles',
     });
-
+    
     await ProfileModel.create({
       username: 'profile3',
       user_id: new_user._id,

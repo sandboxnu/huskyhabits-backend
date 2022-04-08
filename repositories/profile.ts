@@ -1,7 +1,7 @@
 import { Schema, Document } from 'mongoose';
 import ProfileModel from '../dbmodels/profile';
 import HTTPError from '../exceptions/HTTPError';
-import { IProfile } from '../types/dbtypes/profile';
+import IProfile from '../types/dbtypes/profile';
 
 // Gets a profile by id
 export const get_profile_by_id = async (id: string): Promise<IProfile> => {
