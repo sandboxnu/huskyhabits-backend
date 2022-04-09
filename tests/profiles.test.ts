@@ -6,20 +6,15 @@ import { IUser } from '../types/dbtypes/user';
 import UserModel from '../dbmodels/user';
 import { generate_cookies } from './utils';
 import IProfile from '../types/dbtypes/profile';
-import {
-  get_profile_photo,
-  profile_get,
-  profile_get_by_user_id,
-  profile_post,
-  set_profile_photo,
-  user_owns_profile,
-} from '../controllers/profile';
+import { ProfileController } from '../controllers/profile';
 import { POSTCreateProfile } from '../types/apitypes/profile';
 import fs from 'fs';
 
 const profile_route: string = '/api/v1/profiles';
 const mongoDB: string = `${process.env.DATABASE}-test` || '';
 const connectOptions: any = { useNewUrlParser: true, useUnifiedTopology: true };
+const profileController: ProfileController = new ProfileController();
+
 // Connect to db before all tests
 beforeAll(async () => {
   try {
@@ -79,13 +74,13 @@ describe('Testing profile controller', () => {
   });
 
   it('should get a profile by id', async () => {
-    const res1 = await profile_get(profile1._id.toString());
+    const res1 = await profileController.profile_get(profile1._id.toString());
     expect(res1._id).toStrictEqual(profile1._id);
     expect(res1.user_id).toStrictEqual(profile1.user_id);
     expect(res1.username).toBe(profile1.username);
     expect(res1.bio).toBe(profile1.bio);
 
-    const res2 = await profile_get(profile2._id.toString());
+    const res2 = await profileController.profile_get(profile2._id.toString());
     expect(res2._id).toStrictEqual(profile2._id);
     expect(res2.user_id).toStrictEqual(profile2.user_id);
     expect(res2.username).toBe(profile2.username);
@@ -93,13 +88,13 @@ describe('Testing profile controller', () => {
   });
 
   it('should get first profile by user id', async () => {
-    const res1 = await profile_get_by_user_id(cur_user._id);
+    const res1 = await profileController.profile_get_by_user_id(cur_user._id);
     expect(res1._id).toStrictEqual(profile1._id);
     expect(res1.user_id).toStrictEqual(profile1.user_id);
     expect(res1.username).toBe(profile1.username);
     expect(res1.bio).toBe(profile1.bio);
 
-    const res2 = await profile_get_by_user_id(other_user._id);
+    const res2 = await profileController.profile_get_by_user_id(other_user._id);
     expect(res2._id).toStrictEqual(profile2._id);
     expect(res2.user_id).toStrictEqual(profile2.user_id);
     expect(res2.username).toBe(profile2.username);
@@ -114,7 +109,7 @@ describe('Testing profile controller', () => {
       accounts: [{ acc_type: '', uid: '' }],
     });
 
-    expect(profile_get_by_user_id(new_user._id)).rejects.toMatchObject({
+    expect(profileController.profile_get_by_user_id(new_user._id)).rejects.toMatchObject({
       code: 404,
       msg: 'User has no profiles',
     });
@@ -124,7 +119,7 @@ describe('Testing profile controller', () => {
       user_id: new_user._id,
     });
 
-    expect(profile_get_by_user_id(new_user._id)).resolves.toMatchObject({
+    expect(profileController.profile_get_by_user_id(new_user._id)).resolves.toMatchObject({
       username: 'profile3',
       user_id: new_user._id,
     });
@@ -132,9 +127,9 @@ describe('Testing profile controller', () => {
 
   it("profile get should fail if profile doesn't exist", async () => {
     await expect(
-      profile_get(new mongoose.Types.ObjectId().toString()),
+      profileController.profile_get(new mongoose.Types.ObjectId().toString()),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
-    await expect(profile_get('hello')).rejects.toMatchObject({
+    await expect(profileController.profile_get('hello')).rejects.toMatchObject({
       name: 'CastError',
     });
   });
@@ -145,12 +140,12 @@ describe('Testing profile controller', () => {
       bio: 'New profile',
     };
 
-    const post_res = await profile_post(new_profile, cur_user);
+    const post_res = await profileController.profile_post(new_profile, cur_user);
     expect(post_res.user_id).toStrictEqual(cur_user._id);
     expect(post_res.username).toBe(new_profile.username);
     expect(post_res.bio).toBe(new_profile.bio);
 
-    const get_res = await profile_get(post_res._id.toString());
+    const get_res = await profileController.profile_get(post_res._id.toString());
     expect(get_res._id).toStrictEqual(post_res._id);
     expect(get_res.username).toBe(new_profile.username);
     expect(get_res.bio).toBe(new_profile.bio);
@@ -162,7 +157,7 @@ describe('Testing profile controller', () => {
       bio: 'duplicate!',
     };
 
-    await expect(profile_post(new_profile, cur_user)).rejects.toMatchObject({
+    await expect(profileController.profile_post(new_profile, cur_user)).rejects.toMatchObject({
       name: 'MongoServerError',
       code: 11000,
     });
@@ -170,45 +165,44 @@ describe('Testing profile controller', () => {
 
   it('test user_owns_profile', () => {
     expect(
-      user_owns_profile(profile1._id.toString(), cur_user),
+      profileController.user_owns_profile(profile1._id.toString(), cur_user),
     ).resolves.toBeTruthy();
     expect(
-      user_owns_profile(profile1._id.toString(), other_user),
+      profileController.user_owns_profile(profile1._id.toString(), other_user),
     ).resolves.toBeFalsy();
     expect(
-      user_owns_profile(profile2._id.toString(), cur_user),
+      profileController.user_owns_profile(profile2._id.toString(), cur_user),
     ).resolves.toBeFalsy();
     expect(
-      user_owns_profile(profile2._id.toString(), other_user),
+      profileController.user_owns_profile(profile2._id.toString(), other_user),
     ).resolves.toBeTruthy();
   });
 
   it('should set a photo for a profile', async () => {
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
-    const profile = await set_profile_photo(profile1._id.toString(), photo);
-
+    const profile = await profileController.set_profile_photo(profile1._id.toString(), photo);
     expect(profile._id).toStrictEqual(profile1._id);
     expect(profile.photo).toMatchObject(photo);
   });
 
   it('should get the photo for a profile', async () => {
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
-    await set_profile_photo(profile1._id.toString(), photo);
+    await profileController.set_profile_photo(profile1._id.toString(), photo);
 
-    const result = await get_profile_photo(profile1._id.toString());
+    const result = await profileController.get_profile_photo(profile1._id.toString());
     expect(result).toMatchObject(photo);
 
-    const noPhotoResult = await get_profile_photo(profile2._id.toString());
+    const noPhotoResult = await profileController.get_profile_photo(profile2._id.toString());
     expect(noPhotoResult).toMatchObject({});
   });
 
   it('should send an error if setting or getting photo for nonexistant profile id', () => {
     expect(
-      get_profile_photo(new mongoose.Types.ObjectId().toString()),
+      profileController.get_profile_photo(new mongoose.Types.ObjectId().toString()),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
     expect(
-      set_profile_photo(new mongoose.Types.ObjectId().toString(), photo),
+      profileController.set_profile_photo(new mongoose.Types.ObjectId().toString(), photo),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
   });
 });

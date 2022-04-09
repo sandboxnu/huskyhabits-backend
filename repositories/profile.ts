@@ -5,21 +5,15 @@ import IProfile from '../types/dbtypes/profile';
 
 // Gets a profile by id
 export const get_profile_by_id = async (id: string): Promise<IProfile> => {
-  return await ProfileModel.findById(id).then(
-    (result: IProfile | null | undefined) => {
-      if (!result) {
-        return Promise.reject(new HTTPError('Profile not found', 404));
-      }
-
-      return result;
-    },
-  );
+  const profile = await ProfileModel.findById(id);
+  if (!profile) return Promise.reject(new HTTPError('Profile not found', 404));
+  return profile;
 };
 
 // Gets all profile with the given user id
 export const get_profiles_by_user_id = async (
   user_id: Schema.Types.ObjectId,
-): Promise<IProfile[] | null> => {
+): Promise<IProfile[]> => {
   return await ProfileModel.find({ user_id: user_id });
 };
 

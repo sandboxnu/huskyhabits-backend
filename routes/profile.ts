@@ -1,49 +1,41 @@
 import { Request, Response, Router } from 'express';
 import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
-import IProfile from '../types/dbtypes/profile';
+import IProfile, { ProfilePhoto } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';
 import {
-  get_profile_photo,
-  set_profile_photo,
-  profile_get,
-  profile_get_by_user_id,
-  profile_post,
-  user_owns_profile,
+  ProfileController,
 } from '../controllers/profile';
 import { UploadedFile } from 'express-fileupload';
 import { authenticated } from '../authentication';
 
 const router: Router = Router();
+const profileController: ProfileController = new ProfileController();
 
 // Gets the profile of the current logged in user
-router.get('/', authenticated, (req: Request, res: Response) => {
-  profile_get_by_user_id(req.user!._id)
-    .then((profile: GETProfile) => {
-      res.status(200).json(profile);
-    })
-    .catch((err: any) => {
-      if (err instanceof HTTPError) res.status(err.code).send(err.msg);
-      else res.sendStatus(500);
-    });
+router.get('/', authenticated, async (req: Request, res: Response) => {
+  try {
+    const profile: GETProfile = await profileController.profile_get_by_user_id(req.user!._id)
+    res.status(200).json(profile);
+  } catch (err: any) {
+    sendError(err, res);
+  }
 });
 
 // Gets the profile with the given id
-router.get('/:profile_id', (req: Request, res: Response) => {
+router.get('/:profile_id', async (req: Request, res: Response) => {
   const profile_id = req.params.profile_id;
-
-  profile_get(profile_id)
-    .then((profile: GETProfile) => {
-      res.status(200).json(profile);
-    })
-    .catch((err: any) => {
-      sendError(err, res);
-    });
+  try {
+    const profile: GETProfile = await profileController.profile_get(profile_id);
+    res.status(200).json(profile);
+  } catch (err: any) {
+    sendError(err, res);
+  }
 });
 
 // Creates a new profile with the given data
-router.post('/', authenticated, (req: Request, res: Response) => {
+router.post('/', authenticated, async (req: Request, res: Response) => {
   const validate = ajv.getSchema<POSTCreateProfile>('POSTCreateProfile');
   if (!validate) {
     res.sendStatus(500);
@@ -51,32 +43,30 @@ router.post('/', authenticated, (req: Request, res: Response) => {
   }
 
   if (validate(req.body)) {
-    profile_post(req.body, req.user!)
-      .then((profile: IProfile) => {
-        res.status(200).send(profile);
-      })
-      .catch((err: any) => {
-        if (err.name == 'MongoServerError' && err.code == 11000) {
-          err = new HTTPError('Profile already exists', 400);
-        }
-        sendError(err, res);
-      });
+    try {
+      const profile: IProfile = await profileController.profile_post(req.body, req.user!);
+      res.status(200).send(profile);
+    } catch (err: any) {
+      if (err.name == 'MongoServerError' && err.code == 11000) {
+        err = new HTTPError('Profile already exists', 400);
+      }
+      sendError(err, res);
+    }
   } else {
     sendValidationError(validate, res);
   }
 });
 
 // Gets the photo for a given profile
-router.get('/:profile_id/photo', (req: Request, res: Response) => {
+router.get('/:profile_id/photo', async (req: Request, res: Response) => {
   const profile_id = req.params.profile_id;
 
-  get_profile_photo(profile_id)
-    .then((photo: any) => {
-      res.status(200).send(photo);
-    })
-    .catch((err: any) => {
-      sendError(err, res);
-    });
+  try {
+    const photo = await profileController.get_profile_photo(profile_id);
+    res.status(200).send(photo);
+  } catch (err: any) {
+    sendError(err, res); 
+  }
 });
 
 // Sets the photo for a given profile
@@ -85,8 +75,8 @@ router.post(
   authenticated,
   async (req: Request, res: Response) => {
     const profile_id = req.params.profile_id;
-
-    if (!(await user_owns_profile(profile_id, req.user!))) {
+    const ownsProfile = await profileController.user_owns_profile(profile_id, req.user!);
+    if (!ownsProfile) {
       sendError(new HTTPError('Unauthorized', 401), res);
       return;
     }
@@ -106,18 +96,17 @@ router.post(
       return;
     }
 
-    const photo = {
+    const photo: ProfilePhoto = {
       data: photoFile.data,
       contentType: photoFile.mimetype,
     };
 
-    set_profile_photo(profile_id, photo)
-      .then((profile: IProfile) => {
-        res.status(200).send(profile);
-      })
-      .catch((err: any) => {
-        sendError(err, res);
-      });
+    try {
+      const profile = await profileController.set_profile_photo(profile_id, photo);
+      res.status(200).send(profile);
+    } catch (err: any) {
+      sendError(err, res);
+    }
   },
 );
 
