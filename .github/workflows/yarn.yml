@@ -1,0 +1,23 @@
+name: Build Server
+
+on: push
+
+env:
+  DATABASE: ${{ secrets.testsecret }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@master
+
+      - name: Install 🔧
+        run: yarn install
+
+      - name: Build 🏗️
+        run: yarn build
+
+      - name: Test 🚨
+        run: yarn test
