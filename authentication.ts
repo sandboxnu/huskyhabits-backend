@@ -10,6 +10,7 @@ import HTTPError from './exceptions/HTTPError';
 import { IUser } from './types/dbtypes/user';
 import cookieSession from 'cookie-session';
 import { exit } from 'process';
+import Keygrip from 'keygrip';
 
 // specify the User type in Passport as our IUser type
 declare global {
@@ -86,7 +87,7 @@ export const setupAuthentication = (app: Application) => {
   app.use(
     cookieSession({
       name: 'husky-habits-auth',
-      keys: ['key1', 'key2'],
+      keys: new Keygrip(['key1', 'key2'], 'SHA256', 'base64'),
     }),
   );
 
