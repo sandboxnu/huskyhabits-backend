@@ -1,5 +1,6 @@
 import { Request, Response, Router } from 'express';
 import passport, { authenticated } from '../authentication';
+import { generate_authentication_cookies } from '../authentication';
 
 const router: Router = Router();
 
@@ -24,9 +25,20 @@ router.get('/failed', (req: Request, res: Response) =>
   res.status(401).send('Login Failure'),
 );
 
-router.get('/success', authenticated, (req: Request, res: Response) =>
-  res.status(200).send(req.user),
-);
+router.get('/success', authenticated, (req: Request, res: Response) => {
+  const id = req.user?._id;
+  if (!id) {
+    res.status(500).send();
+    return;
+  }
+
+  const auth_cookies = generate_authentication_cookies(id);
+  res.redirect(
+    `exp://login-redirect?cookies=${Buffer.from(auth_cookies).toString(
+      'base64',
+    )}`,
+  );
+});
 
 router.get('/logout', (req: Request, res: Response) => {
   req.session = null;
