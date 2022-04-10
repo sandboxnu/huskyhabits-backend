@@ -1,10 +1,10 @@
 import express, { Request, Response, Application } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
-import profiles from './routes/profile.route';
 import authRoutes from './routes/auth.route';
 import { setupAuthentication } from './authentication';
 import fileUpload from 'express-fileupload';
+import router from './routes';
 
 const app: Application = express();
 
@@ -15,6 +15,8 @@ app.use(express.json());
 // set up authentication middleware
 setupAuthentication(app);
 
+let baseUrl = '/api/v1';
+
 app.use(fileUpload());
 
 /* ROUTES */
@@ -24,8 +26,8 @@ app.get('/', (req: Request, res: Response): void => {
   res.send({ greeting: 'Hello world!' });
 });
 
-// add routes for profile API
-app.use('/api/v1/profiles', profiles);
+// add all API v1 routes
+app.use(baseUrl, router)
 
 // add authentication routes (e.g. via Google, etc.)
 app.use('/auth', authRoutes);

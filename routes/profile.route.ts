@@ -4,9 +4,7 @@ import IProfile, { ProfilePhoto } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';
-import {
-  ProfileController,
-} from '../controllers/profile';
+import { ProfileController, } from '../controllers/profile';
 import { UploadedFile } from 'express-fileupload';
 import { authenticated } from '../authentication';
 
