@@ -17,10 +17,4 @@ db.once('open', (): void => {
   console.log('Connected successfully');
 });
 
-// set up authentication middleware
-setupAuthentication(app);
-
-// add authentication routes (e.g. via Google, etc.)
-app.use('/auth', authRoutes);
-
 app.listen(port, (): void => console.log('Listening on Port 3000'));

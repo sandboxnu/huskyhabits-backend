@@ -3,6 +3,7 @@ import { JSONSchemaType } from 'ajv';
 
 // Type returned when making a GET request to profile api
 export interface GETProfile {
+  _id: Schema.Types.ObjectId;
   user_id: Schema.Types.ObjectId;
   username: string;
   bio: string;
@@ -10,7 +11,6 @@ export interface GETProfile {
 
 // Type given to profile api in POST requests
 export interface POSTCreateProfile {
-  user_id: string;
   username: string;
   bio?: string;
 }
@@ -19,10 +19,9 @@ export interface POSTCreateProfile {
 export const POSTCreateProfileSchema: JSONSchemaType<POSTCreateProfile> = {
   type: 'object',
   properties: {
-    user_id: { type: 'string' },
     username: { type: 'string' },
     bio: { type: 'string', nullable: true },
   },
-  required: ['user_id', 'username'],
+  required: ['username'],
   additionalProperties: false,
 };

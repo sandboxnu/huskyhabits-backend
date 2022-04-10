@@ -7,7 +7,7 @@ export const sendError = (err: any, res: Response) => {
   if (err instanceof HTTPError) {
     res.status(err.code).send(err.msg);
   } else {
-    res.sendStatus(500);
+    res.status(500).send(err);
   }
 };
 
@@ -21,9 +21,5 @@ export const sendValidationError = (
     return;
   }
 
-  res
-    .status(400)
-    .send(
-      `Input parsing error: ${validate.errors[0].instancePath} ${validate.errors[0].message}`,
-    );
+  res.status(400).send(`Input parsing error: ${validate.errors[0].message}`);
 };
