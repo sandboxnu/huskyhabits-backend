@@ -4,7 +4,7 @@ import ProfileModel from '../dbmodels/profile';
 import mongoose from 'mongoose';
 import { IUser } from '../types/dbtypes/user';
 import UserModel from '../dbmodels/user';
-import { generate_cookies } from './utils';
+import { generate_authentication_cookies } from '../authentication';
 import IProfile from '../types/dbtypes/profile';
 import { ProfileController } from '../controllers/profile';
 import { POSTCreateProfile } from '../types/apitypes/profile';
@@ -18,7 +18,7 @@ const profileController: ProfileController = new ProfileController();
 // Connect to db before all tests
 beforeAll(async () => {
   try {
-    await mongoose.connect(mongoDB, connectOptions)
+    await mongoose.connect(mongoDB, connectOptions);
     ProfileModel.deleteMany({});
     UserModel.deleteMany({});
   } catch (err: any) {
@@ -109,17 +109,21 @@ describe('Testing profile controller', () => {
       accounts: [{ acc_type: '', uid: '' }],
     });
 
-    expect(profileController.profile_get_by_user_id(new_user._id)).rejects.toMatchObject({
+    expect(
+      profileController.profile_get_by_user_id(new_user._id),
+    ).rejects.toMatchObject({
       code: 404,
       msg: 'User has no profiles',
     });
-    
+
     await ProfileModel.create({
       username: 'profile3',
       user_id: new_user._id,
     });
 
-    expect(profileController.profile_get_by_user_id(new_user._id)).resolves.toMatchObject({
+    expect(
+      profileController.profile_get_by_user_id(new_user._id),
+    ).resolves.toMatchObject({
       username: 'profile3',
       user_id: new_user._id,
     });
@@ -140,12 +144,17 @@ describe('Testing profile controller', () => {
       bio: 'New profile',
     };
 
-    const post_res = await profileController.profile_post(new_profile, cur_user);
+    const post_res = await profileController.profile_post(
+      new_profile,
+      cur_user,
+    );
     expect(post_res.user_id).toStrictEqual(cur_user._id);
     expect(post_res.username).toBe(new_profile.username);
     expect(post_res.bio).toBe(new_profile.bio);
 
-    const get_res = await profileController.profile_get(post_res._id.toString());
+    const get_res = await profileController.profile_get(
+      post_res._id.toString(),
+    );
     expect(get_res._id).toStrictEqual(post_res._id);
     expect(get_res.username).toBe(new_profile.username);
     expect(get_res.bio).toBe(new_profile.bio);
@@ -157,7 +166,9 @@ describe('Testing profile controller', () => {
       bio: 'duplicate!',
     };
 
-    await expect(profileController.profile_post(new_profile, cur_user)).rejects.toMatchObject({
+    await expect(
+      profileController.profile_post(new_profile, cur_user),
+    ).rejects.toMatchObject({
       name: 'MongoServerError',
       code: 11000,
     });
@@ -180,7 +191,10 @@ describe('Testing profile controller', () => {
 
   it('should set a photo for a profile', async () => {
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
-    const profile = await profileController.set_profile_photo(profile1._id.toString(), photo);
+    const profile = await profileController.set_profile_photo(
+      profile1._id.toString(),
+      photo,
+    );
     expect(profile._id).toStrictEqual(profile1._id);
     expect(profile.photo).toMatchObject(photo);
   });
@@ -189,20 +203,29 @@ describe('Testing profile controller', () => {
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
     await profileController.set_profile_photo(profile1._id.toString(), photo);
 
-    const result = await profileController.get_profile_photo(profile1._id.toString());
+    const result = await profileController.get_profile_photo(
+      profile1._id.toString(),
+    );
     expect(result).toMatchObject(photo);
 
-    const noPhotoResult = await profileController.get_profile_photo(profile2._id.toString());
+    const noPhotoResult = await profileController.get_profile_photo(
+      profile2._id.toString(),
+    );
     expect(noPhotoResult).toMatchObject({});
   });
 
   it('should send an error if setting or getting photo for nonexistant profile id', () => {
     expect(
-      profileController.get_profile_photo(new mongoose.Types.ObjectId().toString()),
+      profileController.get_profile_photo(
+        new mongoose.Types.ObjectId().toString(),
+      ),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
     const photo = { data: fs.readFileSync(photo1), contentType: 'image/jpg' };
     expect(
-      profileController.set_profile_photo(new mongoose.Types.ObjectId().toString(), photo),
+      profileController.set_profile_photo(
+        new mongoose.Types.ObjectId().toString(),
+        photo,
+      ),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
   });
 });
@@ -230,7 +253,7 @@ describe('Testing profile POST', () => {
 
     const res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile);
 
     expect(res.status).toBe(200);
@@ -247,12 +270,12 @@ describe('Testing profile POST', () => {
 
     let res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile1);
     expect(res.status).toBe(200);
     res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile2);
     expect(res.status).toBe(200);
   });
@@ -268,12 +291,12 @@ describe('Testing profile POST', () => {
 
     let res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile1);
     expect(res.statusCode).toBe(200);
     res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile2);
     expect(res.statusCode).toBe(400);
     expect(res.text).toBe('Profile already exists');
@@ -282,7 +305,7 @@ describe('Testing profile POST', () => {
   it('should send error message if we send undefined', async () => {
     const res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(undefined);
     expect(res.statusCode).toBe(400);
   });
@@ -290,7 +313,7 @@ describe('Testing profile POST', () => {
   it('should send error message if we send null', async () => {
     const res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(null);
     expect(res.statusCode).toBe(400);
   });
@@ -303,7 +326,7 @@ describe('Testing profile POST', () => {
 
     const res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(bad_profile);
 
     expect(res.status).toBe(400);
@@ -319,7 +342,7 @@ describe('Testing profile POST', () => {
 
     let res = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(bad_profile1);
     expect(res.status).toBe(400);
     expect(res.text).toBe(
@@ -362,7 +385,7 @@ describe('Testing profile GET', () => {
 
     let response = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(profile_to_get);
     const profile_id = response.body._id;
 
@@ -382,11 +405,11 @@ describe('Testing profile GET', () => {
 
     const res1 = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile_1);
     const res2 = await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(user_profile_2);
 
     const id1 = res1.body._id;
@@ -416,7 +439,7 @@ describe('Testing profile GET', () => {
     };
     await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(new_profile);
 
     const response = await request(app).get(
@@ -432,7 +455,7 @@ describe('Testing profile GET', () => {
     };
     await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(new_profile);
 
     const response = await request(app).get(`${profile_route}`);
@@ -450,16 +473,16 @@ describe('Testing profile GET', () => {
     };
     await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(new_profile1);
     await request(app)
       .post(profile_route)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .send(new_profile2);
 
     const response = await request(app)
       .get(`${profile_route}`)
-      .set('Cookie', generate_cookies(cur_user._id));
+      .set('Cookie', generate_authentication_cookies(cur_user._id));
     expect(response.statusCode).toBe(200);
     expect(
       (response.body.username == new_profile1.username &&
@@ -520,14 +543,14 @@ describe('Testing profile photo POST and GET', () => {
 
     response = await request(app)
       .post(`${profile_route}/${profile2._id}/photo`)
-      .set('Cookie', generate_cookies(cur_user._id));
+      .set('Cookie', generate_authentication_cookies(cur_user._id));
     expect(response.statusCode).toBe(401);
   });
 
   it('should successfully set the photo for a profile', async () => {
     let response = await request(app)
       .post(`${profile_route}/${profile1._id}/photo`)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .attach('photo', photo1);
 
     expect(response.statusCode).toBe(200);
@@ -540,7 +563,7 @@ describe('Testing profile photo POST and GET', () => {
 
     response = await request(app)
       .post(`${profile_route}/${profile2._id}/photo`)
-      .set('Cookie', generate_cookies(other_user._id))
+      .set('Cookie', generate_authentication_cookies(other_user._id))
       .attach('photo', photo2);
 
     expect(response.statusCode).toBe(200);
@@ -555,7 +578,7 @@ describe('Testing profile photo POST and GET', () => {
   it('should successfully get the photo for a profile', async () => {
     await request(app)
       .post(`${profile_route}/${profile1._id}/photo`)
-      .set('Cookie', generate_cookies(cur_user._id))
+      .set('Cookie', generate_authentication_cookies(cur_user._id))
       .attach('photo', photo1);
 
     let response = await request(app).get(
