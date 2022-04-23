@@ -26,9 +26,8 @@ export const get_user_by_id = async (
 ): Promise<IUser> => {
   return UserSchema.findById(id).then((result: IUser | null | undefined) => {
     if (!result) {
-      return Promise.reject(new HTTPError('User does not exist.', 40));
+      return Promise.reject(new HTTPError('User does not exist.', 404));
     }
-
     return result;
   });
 };
