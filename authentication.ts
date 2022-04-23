@@ -90,6 +90,8 @@ export const setupAuthentication = (app: Application) => {
     cookieSession({
       name: 'husky-habits-auth',
       keys: new Keygrip(['key1', 'key2'], 'SHA256', 'base64'),
+      secure: false,
+      sameSite: 'none',
     }),
   );
 
@@ -104,9 +106,12 @@ export const authenticated = (
   res: Response,
   next: NextFunction,
 ) => {
+  console.log("I AM CALLED");
   if (req.user) {
+    console.log(req.user);
     next();
   } else {
+    res.statusMessage = "User not logged in";
     res.sendStatus(401);
   }
 };

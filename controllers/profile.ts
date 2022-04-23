@@ -11,7 +11,6 @@ import {
 } from '../repositories/profile';
 import { Schema } from 'mongoose';
 
-
 export class ProfileController {
   // Get the profile with the given id
   public profile_get = async (id: string): Promise<GETProfile> => {
@@ -82,10 +81,12 @@ export class ProfileController {
   };
 
   // Retreive the profile photo for the specified user
-  public get_profile_photo = async (profile_id: string): Promise<ProfilePhoto> => {
+  public get_profile_photo = async (
+    profile_id: string,
+  ): Promise<ProfilePhoto> => {
     let doc = await get_profile_by_id(profile_id);
     if (!doc) return Promise.reject(new HTTPError('Profile not found', 404));
-    
+
     return doc.photo;
   };
 }

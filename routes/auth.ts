@@ -34,9 +34,9 @@ router.get('/success', authenticated, (req: Request, res: Response) => {
 
   const auth_cookies = generate_authentication_cookies(id);
   res.redirect(
-    `exp://login-redirect?cookies=${Buffer.from(auth_cookies).toString(
-      'base64',
-    )}`,
+    `exp://login-redirect?` +
+      `cookies=${Buffer.from(auth_cookies).toString('base64')}` +
+      `&userId=${req.user?._id}`
   );
 });
 

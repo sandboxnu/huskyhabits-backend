@@ -4,9 +4,7 @@ import IProfile, { ProfilePhoto } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
 import { sendError, sendValidationError } from '../exceptions/utils';
 import { ajv } from '../types/validation';
-import {
-  ProfileController,
-} from '../controllers/profile';
+import { ProfileController } from '../controllers/profile';
 import { UploadedFile } from 'express-fileupload';
 import { authenticated } from '../authentication';
 
@@ -16,7 +14,9 @@ const profileController: ProfileController = new ProfileController();
 // Gets the profile of the current logged in user
 router.get('/', authenticated, async (req: Request, res: Response) => {
   try {
-    const profile: GETProfile = await profileController.profile_get_by_user_id(req.user!._id)
+    const profile: GETProfile = await profileController.profile_get_by_user_id(
+      req.user!._id,
+    );
     res.status(200).json(profile);
   } catch (err: any) {
     sendError(err, res);
@@ -44,7 +44,10 @@ router.post('/', authenticated, async (req: Request, res: Response) => {
 
   if (validate(req.body)) {
     try {
-      const profile: IProfile = await profileController.profile_post(req.body, req.user!);
+      const profile: IProfile = await profileController.profile_post(
+        req.body,
+        req.user!,
+      );
       res.status(200).send(profile);
     } catch (err: any) {
       if (err.name == 'MongoServerError' && err.code == 11000) {
@@ -65,7 +68,7 @@ router.get('/:profile_id/photo', async (req: Request, res: Response) => {
     const photo = await profileController.get_profile_photo(profile_id);
     res.status(200).send(photo);
   } catch (err: any) {
-    sendError(err, res); 
+    sendError(err, res);
   }
 });
 
@@ -75,7 +78,10 @@ router.post(
   authenticated,
   async (req: Request, res: Response) => {
     const profile_id = req.params.profile_id;
-    const ownsProfile = await profileController.user_owns_profile(profile_id, req.user!);
+    const ownsProfile = await profileController.user_owns_profile(
+      profile_id,
+      req.user!,
+    );
     if (!ownsProfile) {
       sendError(new HTTPError('Unauthorized', 401), res);
       return;
@@ -102,7 +108,10 @@ router.post(
     };
 
     try {
-      const profile = await profileController.set_profile_photo(profile_id, photo);
+      const profile = await profileController.set_profile_photo(
+        profile_id,
+        photo,
+      );
       res.status(200).send(profile);
     } catch (err: any) {
       sendError(err, res);
