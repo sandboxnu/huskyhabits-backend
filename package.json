@@ -23,6 +23,7 @@
     "keygrip": "^1.1.0",
     "mongoose": "^6.1.8",
     "node": "^17.4.0",
+    "node-bin-darwin-arm64": "^17.7.2",
     "passport": "^0.5.2",
     "passport-google-oauth2": "^0.2.0",
     "superagent": "^7.1.2",

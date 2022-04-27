@@ -9,9 +9,17 @@ export interface GETProfile {
   bio: string;
 }
 
-// Type given to profile api in POST requests
+// Type given to profile api in POST profile requests
 export interface POSTCreateProfile {
   username: string;
+  bio?: string;
+}
+
+// Type given to profile api in PATCH profile requests
+export interface PATCHProfile {
+  first_name?: string;
+  last_name?: string;
+  username?: string;
   bio?: string;
 }
 
@@ -23,5 +31,16 @@ export const POSTCreateProfileSchema: JSONSchemaType<POSTCreateProfile> = {
     bio: { type: 'string', nullable: true },
   },
   required: ['username'],
+};
+
+// AJV schema to validate PATCHProfile objects
+export const PATCHProfileSchema: JSONSchemaType<PATCHProfile> = {
+  type: 'object',
+  properties: {
+    first_name: { type: 'string', nullable: true },
+    last_name: { type: 'string', nullable: true },
+    username: { type: 'string', nullable: true },
+    bio: { type: 'string', nullable: true },
+  },
   additionalProperties: false,
 };

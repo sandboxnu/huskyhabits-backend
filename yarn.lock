@@ -4220,6 +4220,11 @@ negotiator@0.6.3:
   resolved "https://registry.npmjs.org/negotiator/-/negotiator-0.6.3.tgz"
   integrity sha512-+EUsqGPLsM+j/zdChZjsnX51g4XrHFOIXwfnCVPGlQk/k5giakcKsuxCObBRu6DSm9opw/O6slWbJdghQM4bBg==
 
+node-bin-darwin-arm64@^17.7.2:
+  version "17.7.2"
+  resolved "https://registry.yarnpkg.com/node-bin-darwin-arm64/-/node-bin-darwin-arm64-17.7.2.tgz#e880afe3b32873ffc45b2972455206fcd0e52a90"
+  integrity sha512-AslCAyJY3Yv1fjjtpwCe4YfOOStIF8Ru+IjTfQmIw+90m0RIPcm8iKHDt6tFsVSPI8fuMdQKh5V5uuuksBcUrw==
+
 node-bin-setup@^1.0.0:
   version "1.1.0"
   resolved "https://registry.npmjs.org/node-bin-setup/-/node-bin-setup-1.1.0.tgz"

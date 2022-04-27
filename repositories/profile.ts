@@ -36,3 +36,26 @@ export const save_profile = (
 ): Promise<IProfile> => {
   return profile.save();
 };
+
+export const update_profile_details = async (
+  profile_id: string,
+  first_name: string | undefined,
+  last_name: string | undefined,
+  username: string | undefined,
+  bio: string | undefined,
+): Promise<IProfile | null> => {
+  return ProfileModel.findByIdAndUpdate(
+    { _id: profile_id },
+    {
+      $set: {
+        // conditionally add member to anonymous object
+        // Src: https://stackoverflow.com/questions/11704267/in-javascript-how-to-conditionally-add-a-member-to-an-object
+        ...(first_name && { first_name: first_name }),
+        ...(last_name && { last_name: last_name }),
+        ...(username && { username: username }),
+        ...(bio && { bio: bio }),
+      },
+      $currentDate: { lastModified: true },
+    },
+  );
+};

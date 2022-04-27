@@ -1,4 +1,8 @@
-import { GETProfile, POSTCreateProfile } from '../types/apitypes/profile';
+import {
+  GETProfile,
+  PATCHProfile,
+  POSTCreateProfile,
+} from '../types/apitypes/profile';
 import ProfileModel from '../dbmodels/profile';
 import IProfile, { ProfilePhoto } from '../types/dbtypes/profile';
 import HTTPError from '../exceptions/HTTPError';
@@ -8,9 +12,9 @@ import {
   create_profile,
   save_profile,
   get_profiles_by_user_id,
+  update_profile_details,
 } from '../repositories/profile';
 import { Schema } from 'mongoose';
-
 
 export class ProfileController {
   // Get the profile with the given id
@@ -82,10 +86,31 @@ export class ProfileController {
   };
 
   // Retreive the profile photo for the specified user
-  public get_profile_photo = async (profile_id: string): Promise<ProfilePhoto> => {
+  public get_profile_photo = async (
+    profile_id: string,
+  ): Promise<ProfilePhoto> => {
     let doc = await get_profile_by_id(profile_id);
     if (!doc) return Promise.reject(new HTTPError('Profile not found', 404));
-    
+
     return doc.photo;
+  };
+
+  public profile_patch = async (
+    profile_id: string,
+    profile: PATCHProfile,
+  ): Promise<IProfile> => {
+    const updated_profile = await update_profile_details(
+      profile_id,
+      profile.first_name,
+      profile.last_name,
+      profile.username,
+      profile.bio,
+    );
+    if (!updated_profile) {
+      return Promise.reject(
+        new HTTPError(`Profile not found with ID ${profile_id}`, 404),
+      );
+    }
+    return updated_profile;
   };
 }
