@@ -6,6 +6,7 @@ const profileSchema: Schema = new Schema<IProfile>(
   {
     user_id: { type: Schema.Types.ObjectId, required: true },
     username: { type: String, unique: true },
+    name: { type: String, required: true },
     bio: String,
     photo: { data: Buffer, contentType: String },
     deleted: { type: Boolean, default: false },

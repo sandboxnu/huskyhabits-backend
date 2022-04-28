@@ -11,6 +11,7 @@ export type ProfilePhoto = {
 interface IProfile extends ISoftDeletable {
   _id: Schema.Types.ObjectId;
   user_id: Schema.Types.ObjectId;
+  name: string;
   username: string;
   bio: string;
   photo: ProfilePhoto;

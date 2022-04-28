@@ -101,15 +101,12 @@ export class ProfileController {
   ): Promise<IProfile> => {
     const updated_profile = await update_profile_details(
       profile_id,
-      profile.first_name,
-      profile.last_name,
+      profile.name,
       profile.username,
       profile.bio,
     );
     if (!updated_profile) {
-      return Promise.reject(
-        new HTTPError(`Profile not found with ID ${profile_id}`, 404),
-      );
+      return Promise.reject(new HTTPError(`Profile not found`, 404));
     }
     return updated_profile;
   };

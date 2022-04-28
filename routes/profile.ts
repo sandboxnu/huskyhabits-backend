@@ -127,7 +127,7 @@ router.patch(
   '/:profile_id',
   authenticated,
   async (req: Request, res: Response) => {
-    const validate = ajv.getSchema<POSTCreateProfile>('POSTCreateProfile');
+    const validate = ajv.getSchema<PATCHProfile>('PATCHProfile');
     if (!validate) {
       res.sendStatus(400);
       return;

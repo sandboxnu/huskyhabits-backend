@@ -63,12 +63,14 @@ describe('Testing profile controller', () => {
     profile1 = await ProfileModel.create({
       user_id: cur_user._id,
       username: 'profile1',
+      name: 'profile1name',
       bio: 'Hello World!',
     });
 
     profile2 = await ProfileModel.create({
       user_id: other_user._id,
       username: 'profile2',
+      name: 'profile2name',
       bio: 'Goodbye World!',
     });
   });
@@ -141,6 +143,7 @@ describe('Testing profile controller', () => {
   it('should create a new profile', async () => {
     const new_profile: POSTCreateProfile = {
       username: 'profile3',
+      name: 'profile3name',
       bio: 'New profile',
     };
 
@@ -163,6 +166,7 @@ describe('Testing profile controller', () => {
   it('should fail to create a new profile if username in use', async () => {
     const new_profile: POSTCreateProfile = {
       username: 'profile2',
+      name: 'profile2name',
       bio: 'duplicate!',
     };
 
@@ -227,6 +231,49 @@ describe('Testing profile controller', () => {
         photo,
       ),
     ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
+  });
+
+  it('should fail to edit a profile that does not exist', () => {
+    expect(
+      profileController.profile_patch(
+        new mongoose.Types.ObjectId().toString(),
+        {
+          username: 'somenewusername123',
+        },
+      ),
+    ).rejects.toMatchObject({ code: 404, msg: 'Profile not found' });
+  });
+
+  it('should successfully update all fields in existing profile', async () => {
+    const updatedProfile = await profileController.profile_patch(
+      profile1._id.toString(),
+      {
+        name: `updated${profile1.name}`,
+        username: `updated${profile1.username}`,
+        bio: `updated${profile1.bio}`,
+      },
+    );
+
+    expect(updatedProfile.name).toStrictEqual(`updated${profile1.name}`);
+    expect(updatedProfile.username).toStrictEqual(
+      `updated${profile1.username}`,
+    );
+    expect(updatedProfile.bio).toStrictEqual(`updated${profile1.bio}`);
+  });
+
+  it('should successfully update some fields in existing profile', async () => {
+    const updatedProfile = await profileController.profile_patch(
+      profile1._id.toString(),
+      {
+        name: `updated${profile1.name}`,
+        username: `updated${profile1.username}`,
+      },
+    );
+
+    expect(updatedProfile.name).toStrictEqual(`updated${profile1.name}`);
+    expect(updatedProfile.username).toStrictEqual(
+      `updated${profile1.username}`,
+    );
   });
 });
 
@@ -522,12 +569,14 @@ describe('Testing profile photo POST and GET', () => {
     profile1 = await ProfileModel.create({
       user_id: cur_user._id,
       username: 'profile1',
+      name: 'profile1name',
       bio: 'Hello World!',
     });
 
     profile2 = await ProfileModel.create({
       user_id: other_user._id,
       username: 'profile2',
+      name: 'profile2name',
       bio: 'Goodbye World!',
     });
 

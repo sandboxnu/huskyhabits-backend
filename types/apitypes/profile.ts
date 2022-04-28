@@ -12,13 +12,13 @@ export interface GETProfile {
 // Type given to profile api in POST profile requests
 export interface POSTCreateProfile {
   username: string;
+  name: string;
   bio?: string;
 }
 
 // Type given to profile api in PATCH profile requests
 export interface PATCHProfile {
-  first_name?: string;
-  last_name?: string;
+  name?: string;
   username?: string;
   bio?: string;
 }
@@ -28,6 +28,7 @@ export const POSTCreateProfileSchema: JSONSchemaType<POSTCreateProfile> = {
   type: 'object',
   properties: {
     username: { type: 'string' },
+    name: { type: 'string' },
     bio: { type: 'string', nullable: true },
   },
   required: ['username'],
@@ -37,8 +38,7 @@ export const POSTCreateProfileSchema: JSONSchemaType<POSTCreateProfile> = {
 export const PATCHProfileSchema: JSONSchemaType<PATCHProfile> = {
   type: 'object',
   properties: {
-    first_name: { type: 'string', nullable: true },
-    last_name: { type: 'string', nullable: true },
+    name: { type: 'string', nullable: true },
     username: { type: 'string', nullable: true },
     bio: { type: 'string', nullable: true },
   },
